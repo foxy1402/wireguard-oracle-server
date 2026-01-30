@@ -106,6 +106,24 @@ else
     echo -e "${YELLOW}! firewalld not active, skipping${NC}"
 fi
 
+# Check and handle SELinux if it's blocking
+echo -e "${BLUE}[6.5/8]${NC} Checking SELinux status..."
+if command -v getenforce &>/dev/null; then
+    SELINUX_STATUS=$(getenforce)
+    if [ "$SELINUX_STATUS" = "Enforcing" ]; then
+        echo -e "${YELLOW}! SELinux is in Enforcing mode${NC}"
+        echo -e "${YELLOW}  This can sometimes block WireGuard traffic${NC}"
+        echo -e "${BLUE}  Setting SELinux to Permissive mode...${NC}"
+        setenforce 0
+        echo -e "${GREEN}✓ SELinux set to Permissive (temporary)${NC}"
+        echo -e "${YELLOW}  Note: To make permanent, edit /etc/selinux/config${NC}"
+    else
+        echo -e "${GREEN}✓ SELinux is not blocking (${SELINUX_STATUS})${NC}"
+    fi
+else
+    echo -e "${GREEN}✓ SELinux not installed${NC}"
+fi
+
 # Fix WireGuard config PostUp/PostDown
 echo -e "${BLUE}[7/8]${NC} Updating WireGuard configuration..."
 if [ -f /etc/wireguard/wg0.conf ]; then

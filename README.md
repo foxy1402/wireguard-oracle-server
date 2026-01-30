@@ -1,251 +1,791 @@
-# WireGuard on Oracle Linux 8 - Quick Start Guide
+# WireGuard on Oracle Linux 8 - Complete Setup Guide
 
-## 🚀 Quick Installation (Recommended)
+> **🎯 The Solution to: "WireGuard connects but NO internet!"**  
+> This guide solves the most frustrating Oracle Cloud + WireGuard issue with automated scripts.
 
-### Step 1: Upload and Run the Setup Script
+## ⚡ 30-Second Quick Start
 
 ```bash
-# Download the setup script
-wget https://your-server/wireguard-oracle-setup.sh
-# OR upload it via SCP/SFTP
+# 1. On your Oracle instance
+git clone https://github.com/foxy1402/wireguard-oracle-server.git
+cd wireguard-oracle-server
+chmod +x *.sh
+sudo ./wireguard-oracle-setup.sh
 
-# Make it executable
-chmod +x wireguard-oracle-setup.sh
+# 2. In Oracle Cloud Console
+# Add Security Rule: UDP Port 51820 from 0.0.0.0/0
 
-# Run the installation (as root)
+# 3. Download client config from server
+sudo cat /etc/wireguard/client_windows11.conf
+# Copy to your computer and import to WireGuard app
+
+# Done! Connect and test: ping 10.8.0.1 then ping 8.8.8.8
+```
+
+**Still have issues?** Run: `sudo ./complete-fix.sh` then reconnect.
+
+**Brand new to this?** 📄 **[Read the step-by-step QUICK-START.md guide](./QUICK-START.md)** - A printable checklist with every single step explained!
+
+---
+
+## 📖 What This Does
+
+Setting up WireGuard on Oracle Cloud is challenging because:
+- ❌ Oracle Cloud has special firewall rules that block internet access by default
+- ❌ Standard WireGuard guides don't work on Oracle Linux
+- ❌ Manual configuration is complex and error-prone
+
+**This repository provides:**
+- ✅ **Automated installation** - One command to set everything up
+- ✅ **Auto-fix script** - Automatically solves the "no internet" problem
+- ✅ **Health checks** - Verify everything is working correctly
+- ✅ **Oracle Cloud specific** - Designed specifically for Oracle Linux 8 ARM instances
+
+### 🔄 How It Works (Visual Overview)
+
+```
+Your Device                Oracle Cloud              Internet
+    │                           │                        │
+    │  1. WireGuard Tunnel      │                        │
+    │ ════════════════════════> │                        │
+    │     (UDP Port 51820)       │                        │
+    │                            │                        │
+    │  2. Traffic forwarding     │  3. NAT & Routing     │
+    │                            │ ═══════════════════> │
+    │                            │   (Your Oracle IP)     │
+    │                            │                        │
+    │  4. Response returns       │  5. Back through VPN  │
+    │ <═══════════════════════════════════════════════ │
+    │                            │                        │
+   YOU                    YOUR VPN SERVER          GOOGLE.COM
+```
+
+**The Challenge:** Steps 2-3 require special Oracle Cloud configuration (firewall + NAT).  
+**The Solution:** This repository automates everything with `wireguard-oracle-setup.sh` + `complete-fix.sh`.
+
+---
+
+## 🚀 Quick Start (3 Steps)
+
+### Prerequisites
+- Oracle Cloud account with a Linux 8 ARM instance running
+- SSH access to your Oracle instance
+- WireGuard client on your device ([Download here](https://www.wireguard.com/install/))
+
+---
+
+### **STEP 1: Upload Scripts to Your Server**
+
+**Option A: Using Git (Easiest)**
+```bash
+# SSH into your Oracle instance, then run:
+sudo dnf install -y git
+git clone https://github.com/foxy1402/wireguard-oracle-server.git
+cd wireguard-oracle-server
+```
+
+**Option B: Manual Upload**
+1. Download this repository as ZIP from GitHub
+2. Extract the files on your computer
+3. Use WinSCP, FileZilla, or `scp` to upload all files to your Oracle instance
+4. SSH into your server and navigate to the uploaded folder
+
+---
+
+### **STEP 2: Run the Installation Script**
+
+```bash
+# Make scripts executable
+chmod +x wireguard-oracle-setup.sh complete-fix.sh health-check.sh
+
+# Run the main installation (takes 2-3 minutes)
 sudo ./wireguard-oracle-setup.sh
 ```
 
-This will:
-- ✅ Install WireGuard
-- ✅ Configure IP forwarding
-- ✅ Set up firewall rules
-- ✅ Create server configuration
-- ✅ Generate a client configuration (windows11.conf)
-- ✅ Run diagnostics
-- ✅ Auto-fix common issues
+**What happens:**
+- ✅ Installs WireGuard automatically
+- ✅ Configures networking and firewall
+- ✅ Generates encryption keys
+- ✅ Creates your first client config file (`client_windows11.conf`)
+- ✅ Shows you a QR code for easy mobile setup
+- ✅ Runs diagnostics and auto-fixes common issues
 
-### Step 2: Configure Oracle Cloud Security List
+💡 **Important:** Write down the path shown at the end (usually `/etc/wireguard/client_windows11.conf`)
 
-**CRITICAL:** This is the #1 reason WireGuard doesn't work!
+---
 
-1. Log into [Oracle Cloud Console](https://cloud.oracle.com)
-2. Navigate to: **☰ Menu → Networking → Virtual Cloud Networks**
-3. Click your **VCN** → Click **Security Lists** → Click **Default Security List**
-4. Click **Add Ingress Rules**
-5. Enter:
-   - **Source CIDR:** `0.0.0.0/0`
-   - **IP Protocol:** `UDP`
-   - **Destination Port Range:** `51820`
-6. Click **Add Ingress Rules**
+### **STEP 3: Configure Oracle Cloud Firewall** 
 
-### Step 3: Download Client Configuration
+⚠️ **CRITICAL - DON'T SKIP THIS!** This is why 90% of people fail.
 
+Oracle Cloud blocks all traffic by default. You MUST add a firewall rule:
+
+1. **Login** to [Oracle Cloud Console](https://cloud.oracle.com)
+2. **Click** the hamburger menu (☰) → **Networking** → **Virtual Cloud Networks**
+3. **Click** on your VCN name (e.g., "vcn-...")
+4. On the left sidebar, **click** "Security Lists"
+5. **Click** on "Default Security List for vcn-..."
+6. **Click** the blue button **"Add Ingress Rules"**
+7. **Fill in:**
+   - **Source CIDR:** `0.0.0.0/0` (allows connection from anywhere)
+   - **IP Protocol:** `UDP` (WireGuard uses UDP)
+   - **Destination Port Range:** `51820` (WireGuard default port)
+   - Leave other fields as default
+8. **Click** "Add Ingress Rules" button at the bottom
+
+✅ **Verification:** You should see a new rule in the list with UDP port 51820
+
+---
+
+### **STEP 4: Download Your Client Configuration**
+
+**Option A: Copy-paste method (Easier for beginners)**
 ```bash
-# The client config is at:
-/etc/wireguard/client_windows11.conf
-
-# Download it using SCP or copy the content:
+# On your server, display the config file:
 sudo cat /etc/wireguard/client_windows11.conf
 ```
+1. Select and copy ALL the text that appears
+2. On your Windows/Mac computer, open Notepad/TextEdit
+3. Paste the text
+4. Save the file as `wireguard.conf` (make sure it's .conf, not .txt)
 
-### Step 4: Install WireGuard on Windows 11
+**Option B: Direct download (Advanced users)**
+```bash
+# From your computer (not the server), run:
+scp your-username@your-server-ip:/etc/wireguard/client_windows11.conf ./wireguard.conf
+```
+Replace `your-username` and `your-server-ip` with your actual details.
 
-1. Download WireGuard from: https://www.wireguard.com/install/
-2. Install and open WireGuard
-3. Click **Add Tunnel** → **Import from file**
-4. Select the `client_windows11.conf` file
-5. Click **Activate**
+**Option C: For mobile devices (Easiest!)**
+- A QR code was displayed during installation
+- Open your WireGuard mobile app and scan the QR code
+- Done! Skip to Step 6 for mobile.
 
-### Step 5: Test Connection
+---
 
-On Windows, open PowerShell:
+### **STEP 5: Import Configuration to WireGuard Client**
+
+**For Windows:**
+1. Download and install WireGuard from: https://www.wireguard.com/install/
+2. Open the WireGuard application
+3. Click **"Add Tunnel"** button (or drag and drop your .conf file)
+4. Click **"Import tunnel(s) from file"**
+5. Select the `wireguard.conf` file you saved in Step 4
+6. You should see a new tunnel named "windows11" or "wireguard"
+
+**For Mac:**
+1. Install WireGuard from the App Store
+2. Click the WireGuard menu bar icon → **"Import Tunnel(s) from File"**
+3. Select your `.conf` file
+
+**For Mobile (Android/iOS):**
+1. Install WireGuard from Play Store / App Store
+2. Tap the **+** button → **"Scan from QR code"**
+3. Scan the QR code shown during server installation (or generate a new one - see section below)
+
+---
+
+### **STEP 6: Connect and Test**
+
+**To Connect:**
+1. In the WireGuard app, find your tunnel (e.g., "windows11")
+2. Click the **"Activate"** button or toggle switch
+3. Status should change to **"Active"**
+
+**Testing Your Connection:**
+
+On **Windows**, open PowerShell or Command Prompt and run:
 ```powershell
-# Check if connected
+# Test 1: Can you reach the WireGuard server?
 ping 10.8.0.1
+# Should get replies ✅
 
-# Test internet
+# Test 2: Can you access the internet?
 ping 8.8.8.8
+# Should get replies ✅
 
-# Test DNS
-nslookup google.com
+# Test 3: Is DNS working?
+ping google.com
+# Should get replies ✅
 ```
 
-If you can ping 10.8.0.1 but not 8.8.8.8, run the auto-fix:
-```bash
-sudo ./wireguard-oracle-setup.sh --fix
-```
+On **Mac/Linux**, open Terminal and run the same ping commands above.
 
----
-
-## 🌐 Optional: Install Web Dashboard
-
-For easier management with a nice UI:
-
-```bash
-# Make dashboard script executable
-chmod +x install-dashboard.sh
-
-# Install the dashboard
-sudo ./install-dashboard.sh
-```
-
-**Configure Oracle Cloud for dashboard:**
-1. Add another Ingress Rule in Security List:
-   - **Source CIDR:** `0.0.0.0/0`
-   - **IP Protocol:** `TCP`
-   - **Destination Port Range:** `8080`
-
-Access dashboard at: `http://YOUR_SERVER_IP:8080`
-
----
-
-## 📱 Adding More Clients
-
-```bash
-# Add a new client (phone, tablet, etc.)
-sudo ./wireguard-oracle-setup.sh --add-client myphone
-
-# Download the config
-sudo cat /etc/wireguard/client_myphone.conf
-```
-
-Or use the web dashboard to add clients with QR codes!
+On **Mobile**, open a web browser and try visiting any website.
 
 ---
 
 ## 🔧 Troubleshooting
 
-### Problem: Connected but no internet
+### 🔍 Quick Diagnostic Flowchart
 
-**Run auto-fix:**
+**Start here:**
+```
+Can you connect to WireGuard at all?
+│
+├─ NO → Problem 2 (Cannot Connect)
+│
+└─ YES → Can you ping 10.8.0.1?
+    │
+    ├─ NO → Check client config, restart WireGuard
+    │
+    └─ YES → Can you ping 8.8.8.8?
+        │
+        ├─ NO → Problem 1 (No Internet) ⭐ MOST COMMON
+        │
+        └─ YES → Can you access websites?
+            │
+            ├─ NO → Problem 3 (DNS/MTU Issue)
+            │
+            └─ YES → 🎉 Everything works!
+```
+
+### ❌ Problem 1: Connected but NO Internet Access
+
+**Symptom:** `ping 10.8.0.1` works ✅, but `ping 8.8.8.8` fails ❌
+
+**Solution:** Run the complete fix script on your server:
 ```bash
-sudo ./wireguard-oracle-setup.sh --fix
+sudo ./complete-fix.sh
 ```
 
-**Run diagnostics:**
+This will:
+- Re-enable IP forwarding
+- Fix NAT/iptables rules
+- Configure Oracle Cloud specific firewall rules
+- Make all changes permanent (survive reboots)
+
+After running, disconnect and reconnect your WireGuard client, then test again.
+
+---
+
+### ❌ Problem 2: Cannot Connect at All
+
+**Symptom:** WireGuard shows "Connecting..." forever or immediate failure
+
+**Common causes and fixes:**
+
+**✅ Check #1: Oracle Cloud Security List**
+- This is the #1 reason! Go back to Step 3 and verify you added the UDP 51820 rule
+- Make sure the rule shows "0.0.0.0/0" as source, not something else
+
+**✅ Check #2: Is WireGuard running on the server?**
 ```bash
-sudo ./wireguard-oracle-setup.sh --diagnose
+sudo systemctl status wg-quick@wg0
+# Should show "active (exited)" in green
+```
+If not running:
+```bash
+sudo systemctl restart wg-quick@wg0
 ```
 
-### Problem: Can't connect at all
-
-1. ✅ Check Oracle Cloud Security List (UDP 51820)
-2. ✅ Check if WireGuard is running: `sudo systemctl status wg-quick@wg0`
-3. ✅ Check firewall: `sudo firewall-cmd --list-ports`
-
-### Problem: Some sites load, others don't
-
-**Fix MTU issue** - Edit client config and add:
-```ini
-[Interface]
-MTU = 1420  # Add this line
+**✅ Check #3: Firewall on server**
+```bash
+sudo firewall-cmd --list-ports
+# Should show: 51820/udp
+```
+If not listed:
+```bash
+sudo firewall-cmd --permanent --add-port=51820/udp
+sudo firewall-cmd --reload
 ```
 
-### Common Commands
+**✅ Check #4: Wrong server IP in client config?**
+- Open your WireGuard client config
+- Check the `Endpoint` line - it should have your Oracle instance's PUBLIC IP
+- Get your public IP: `curl ifconfig.me`
+
+---
+
+### ❌ Problem 3: Some Websites Work, Others Don't
+
+**Symptom:** Can access Google but other sites fail, or downloads break
+
+**Solution:** MTU (packet size) issue
+
+1. **Edit your client config** in WireGuard app
+2. Find the `[Interface]` section
+3. Add this line (or change if it exists):
+   ```ini
+   MTU = 1420
+   ```
+4. Save and reconnect
+
+---
+
+### ❌ Problem 4: Connection Drops After a While
+
+**Symptom:** Works for a few minutes then stops
+
+**Solution:** NAT keepalive issue (should already be configured, but verify)
+
+1. **Edit your client config**
+2. Find the `[Peer]` section
+3. Make sure this line exists:
+   ```ini
+   PersistentKeepalive = 25
+   ```
+4. Save and reconnect
+
+---
+
+### 🔍 Run Health Check
+
+To see exactly what's wrong:
+```bash
+# Run the health check script
+sudo ./health-check.sh
+```
+
+This will check:
+- ✅ WireGuard installation
+- ✅ IP forwarding
+- ✅ Firewall rules
+- ✅ NAT configuration
+- ✅ Active connections
+
+It will tell you exactly what needs fixing.
+
+---
+
+### 🛠️ Useful Commands
 
 ```bash
 # Check WireGuard status
 sudo wg show
 
+# View WireGuard logs
+sudo journalctl -u wg-quick@wg0 -f
+
 # Restart WireGuard
 sudo systemctl restart wg-quick@wg0
 
-# View logs
-sudo journalctl -u wg-quick@wg0 -f
-
 # Check IP forwarding
 sysctl net.ipv4.ip_forward
+# Should show: net.ipv4.ip_forward = 1
 
 # Check NAT rules
-sudo iptables -t nat -L POSTROUTING -n -v
+sudo iptables -t nat -L POSTROUTING -n -v | grep MASQUERADE
+# Should show a rule for 10.8.0.0/24
+
+# Run auto-fix
+sudo ./wireguard-oracle-setup.sh --fix
+
+# Run diagnostics
+sudo ./wireguard-oracle-setup.sh --diagnose
 ```
+
+---
+
+## 📱 Adding More Devices (Phone, Tablet, Laptop)
+
+### Method 1: Using the Script (Recommended)
+
+```bash
+# Add a new client (replace 'myphone' with any name you want)
+sudo ./wireguard-oracle-setup.sh --add-client myphone
+
+# The script will:
+# - Generate keys for the new device
+# - Create a config file
+# - Display a QR code
+# - Show you the config file location
+
+# To see the config again:
+sudo cat /etc/wireguard/client_myphone.conf
+
+# To generate a QR code again:
+sudo qrencode -t ansiutf8 < /etc/wireguard/client_myphone.conf
+```
+
+### Method 2: Using Web Dashboard (Easier for Non-Technical Users)
+
+See the "Optional: Web Dashboard" section below for a graphical interface to manage clients.
+
+---
+
+## 🌐 Optional: Install Web Dashboard
+
+Want to manage WireGuard through a web browser? Install the dashboard!
+
+### Step 1: Install Dashboard
+```bash
+chmod +x install-dashboard.sh
+sudo ./install-dashboard.sh
+```
+
+### Step 2: Configure Oracle Cloud Firewall
+Add another ingress rule (same as Step 3 earlier):
+1. Oracle Cloud Console → Networking → VCN → Security Lists
+2. Add Ingress Rule:
+   - **Source CIDR:** `0.0.0.0/0`
+   - **IP Protocol:** `TCP`
+   - **Destination Port Range:** `8080`
+3. Save
+
+### Step 3: Access Dashboard
+Open your browser and go to:
+```
+http://YOUR_SERVER_PUBLIC_IP:8080
+```
+
+**Features:**
+- ✅ Add/remove clients with QR codes
+- ✅ See who's connected in real-time
+- ✅ Monitor bandwidth usage
+- ✅ Download client configs easily
+
+💡 **Tip:** To find your server's public IP: `curl ifconfig.me`
+
+---
+
+## 🔐 Security Best Practices
+
+### Essential Security Tips
+
+1. **🔑 Protect Your Private Keys**
+   - Never share `/etc/wireguard/server_private.key`
+   - Client configs contain private keys - treat them like passwords
+   - Don't share client configs between devices
+
+2. **🚪 Change Default Port (Optional)**
+   If you want to use a different port than 51820:
+   ```bash
+   # Edit server config
+   sudo nano /etc/wireguard/wg0.conf
+   # Change ListenPort = 51820 to your desired port
+   
+   # Update firewall
+   sudo firewall-cmd --permanent --add-port=YOUR_PORT/udp
+   sudo firewall-cmd --reload
+   
+   # Restart WireGuard
+   sudo systemctl restart wg-quick@wg0
+   ```
+   ⚠️ Don't forget to update Oracle Cloud Security List with the new port!
+
+3. **🗑️ Remove Unused Clients**
+   ```bash
+   # Edit server config
+   sudo nano /etc/wireguard/wg0.conf
+   # Delete the [Peer] section for the old client
+   
+   # Restart WireGuard
+   sudo systemctl restart wg-quick@wg0
+   ```
+
+4. **🔄 Keep System Updated**
+   ```bash
+   # Update WireGuard and system packages monthly
+   sudo dnf update -y
+   ```
+
+5. **👀 Monitor Active Connections**
+   ```bash
+   # See who's currently connected
+   sudo wg show
+   ```
+
+6. **🛡️ Restrict Dashboard Access (If Installed)**
+   ```bash
+   # Update Oracle Cloud Security List for port 8080:
+   # Change Source CIDR from 0.0.0.0/0 to YOUR_HOME_IP/32
+   # This allows only your IP to access the dashboard
+   ```
 
 ---
 
 ## 📋 Complete Verification Checklist
 
-Run these commands to verify everything is working:
+Use this checklist to verify everything is working correctly:
+
+### Server-Side Checks (Run on Oracle instance)
 
 ```bash
-# 1. IP forwarding enabled?
+# ✅ Check 1: IP forwarding enabled?
 sysctl net.ipv4.ip_forward
-# Should show: net.ipv4.ip_forward = 1
+# Expected: net.ipv4.ip_forward = 1
 
-# 2. WireGuard running?
+# ✅ Check 2: WireGuard running?
 sudo systemctl status wg-quick@wg0
-# Should show: active (exited)
+# Expected: "active (exited)" in green
 
-# 3. NAT rule exists?
+# ✅ Check 3: NAT rule exists?
 sudo iptables -t nat -L POSTROUTING -n | grep MASQUERADE
-# Should show a MASQUERADE rule for 10.8.0.0/24
+# Expected: A line showing "10.8.0.0/24" and "MASQUERADE"
 
-# 4. Firewall allows WireGuard?
+# ✅ Check 4: Firewall allows WireGuard?
 sudo firewall-cmd --list-ports
-# Should show: 51820/udp
+# Expected: Should include "51820/udp"
 
-# 5. WireGuard interface up?
+# ✅ Check 5: WireGuard interface up?
 ip addr show wg0
-# Should show the wg0 interface with IP 10.8.0.1
+# Expected: Should show interface with IP 10.8.0.1/24
+
+# ✅ Check 6: Oracle Cloud Security List configured?
+# Log into Oracle Cloud Console and verify UDP 51820 ingress rule exists
 ```
 
-If all checks pass but you still can't connect from Windows:
-- ✅ **Double-check Oracle Cloud Security List** (most common issue!)
+### Client-Side Checks (Run on your device)
 
----
-
-## 🆘 Still Having Issues?
-
-Check the detailed troubleshooting guide:
+**Windows PowerShell / Mac Terminal / Linux Terminal:**
 ```bash
-cat TROUBLESHOOTING.md
+# ✅ Test 1: Can reach VPN server?
+ping 10.8.0.1
+# Expected: Replies from 10.8.0.1
+
+# ✅ Test 2: Internet access through VPN?
+ping 8.8.8.8
+# Expected: Replies from 8.8.8.8
+
+# ✅ Test 3: DNS resolution working?
+ping google.com
+# Expected: Replies showing IP addresses
+
+# ✅ Test 4: Check your public IP changed
+curl ifconfig.me
+# Expected: Should show your Oracle server's IP, not your home IP
 ```
 
-Or check the logs:
-```bash
-# WireGuard logs
-sudo journalctl -u wg-quick@wg0 -n 50
+**If all tests pass:** 🎉 **Congratulations! Your WireGuard VPN is working perfectly!**
 
-# System logs
-sudo dmesg | grep -i wireguard
-```
-
----
-
-## 🔐 Security Notes
-
-1. **Keep your private keys secure** - Never share them
-2. **Change default port if needed**: Edit `ListenPort` in `/etc/wireguard/wg0.conf`
-3. **Use strong client names** - Easy to remember but not predictable
-4. **Regularly update**: `sudo dnf update wireguard-tools`
-5. **Monitor connections**: `sudo wg show` to see active peers
+**If any test fails:** 📖 See the Troubleshooting section above.
 
 ---
 
 ## 📁 Important File Locations
 
-- Server config: `/etc/wireguard/wg0.conf`
-- Client configs: `/etc/wireguard/client_*.conf`
-- Server keys: `/etc/wireguard/server_*.key`
-- Logs: `journalctl -u wg-quick@wg0`
+**Server Files (on Oracle instance):**
+- **Server config:** `/etc/wireguard/wg0.conf` - Main WireGuard server configuration
+- **Client configs:** `/etc/wireguard/client_*.conf` - Generated client configuration files
+- **Server keys:** `/etc/wireguard/server_*.key` - Server's private and public keys (keep secure!)
+- **iptables rules:** `/etc/iptables/rules.v4` - Saved firewall rules
+- **Logs:** View with `journalctl -u wg-quick@wg0`
+
+**What Each File Contains:**
+- `wg0.conf` = Server settings + list of allowed clients
+- `client_*.conf` = Everything a client needs to connect (keys, server IP, DNS, etc.)
+- `server_private.key` = ⚠️ **NEVER SHARE THIS** - Server's secret key
 
 ---
 
 ## 🎯 Performance Tips
 
-1. **Use PersistentKeepalive**: Already set to 25 seconds in client config
-2. **Optimize MTU**: Set to 1420 in both server and client configs
-3. **Use Cloudflare DNS**: 1.1.1.1 is fast and private
-4. **Close unused connections**: Remove old clients from server config
+### Optimize Your VPN Connection
+
+1. **✅ Enable Persistent Keepalive (Already configured)**
+   - Keeps connection alive through NAT
+   - Set to 25 seconds in all client configs
+   - Prevents connection drops
+
+2. **✅ Use Optimal MTU (Already configured)**
+   - Set to 1420 in both server and client
+   - Prevents packet fragmentation
+   - Improves stability and speed
+
+3. **🚀 Use Fast DNS Servers**
+   Already configured in client configs:
+   - Primary: `1.1.1.1` (Cloudflare - fast and private)
+   - Secondary: `8.8.8.8` (Google - reliable)
+   
+   To change: Edit `DNS =` line in your client config
+
+4. **📊 Monitor Bandwidth**
+   ```bash
+   # See transfer statistics
+   sudo wg show wg0 transfer
+   ```
+
+5. **🧹 Remove Inactive Clients**
+   - Fewer configured clients = better performance
+   - Remove old devices you don't use anymore
+   - Edit `/etc/wireguard/wg0.conf` and delete unused `[Peer]` sections
+
+6. **⚡ Oracle Cloud Instance Performance**
+   - Free tier ARM instances are quite fast!
+   - Upgrade to paid tier for even better performance
+   - Consider choosing a region closer to your location
 
 ---
 
-## 📞 Support
+## 🆘 Getting Help
 
-If you need help:
-1. Run diagnostics: `sudo ./wireguard-oracle-setup.sh --diagnose`
-2. Check TROUBLESHOOTING.md
-3. Review Oracle Cloud Security List configuration
-4. Check server logs: `sudo journalctl -u wg-quick@wg0 -f`
+### Self-Help Resources (Try these first!)
 
-Remember: **Oracle Cloud Security List is the #1 cause of connection issues!**
+1. **Run the health check:**
+   ```bash
+   sudo ./health-check.sh
+   ```
+   This will tell you exactly what's wrong.
+
+2. **Run the complete fix:**
+   ```bash
+   sudo ./complete-fix.sh
+   ```
+   Automatically fixes most common issues.
+
+3. **Check the detailed troubleshooting guide:**
+   ```bash
+   cat TROUBLESHOOTING.md
+   ```
+   Contains solutions for specific error messages.
+
+4. **View WireGuard logs:**
+   ```bash
+   # Live logs (watch in real-time)
+   sudo journalctl -u wg-quick@wg0 -f
+   
+   # Last 50 log entries
+   sudo journalctl -u wg-quick@wg0 -n 50
+   
+   # Logs with errors only
+   sudo journalctl -u wg-quick@wg0 -p err
+   ```
+
+### Still Stuck?
+
+**Before asking for help, gather this information:**
+
+```bash
+# Run diagnostics and save output
+sudo ./wireguard-oracle-setup.sh --diagnose > diagnostics.txt
+
+# Check your setup
+sudo ./health-check.sh > health.txt
+
+# Get WireGuard status
+sudo wg show > wg-status.txt
+```
+
+Include this information when asking for help:
+1. Which step you're stuck on
+2. Error messages you're seeing
+3. Output from the commands above
+4. Your Oracle Cloud region
+5. Client device type (Windows/Mac/Android/iOS)
+
+### Common Questions
+
+**Q: Can I use this for multiple people?**  
+A: Yes! Add a client for each person using `--add-client`. Each gets their own config file.
+
+**Q: Will this work on Oracle Cloud Free Tier?**  
+A: Yes! This guide is specifically designed for Oracle Cloud Free Tier ARM instances.
+
+**Q: Does this work on other Oracle Linux versions?**  
+A: This is optimized for Oracle Linux 8 ARM. It may work on other versions but hasn't been tested.
+
+**Q: Can I use a different port instead of 51820?**  
+A: Yes! See the "Security Best Practices" section for instructions.
+
+**Q: How do I backup my configuration?**  
+A: Copy these files to a safe location:
+```bash
+sudo cp -r /etc/wireguard ~/wireguard-backup
+# Then download the backup folder to your computer
+```
+
+**Q: What if my Oracle instance restarts?**  
+A: Everything is configured to start automatically on boot. WireGuard will be running when the server comes back up.
+
+**Q: Can I connect multiple devices at the same time?**  
+A: Yes! Each device needs its own client config (create with `--add-client`), then all can connect simultaneously.
+
+**Q: How do I check if someone is using my VPN right now?**  
+A:
+```bash
+sudo wg show
+# Look for "latest handshake" - if recent (< 3 minutes), they're connected
+```
+
+**Q: Does this hide my IP address?**  
+A: Yes! When connected, websites see your Oracle server's IP instead of your real IP.
+
+---
+
+## 📊 What Makes This Different?
+
+### Why This Solution Works (When Others Don't)
+
+**Problem with standard WireGuard guides:**
+- ❌ They don't account for Oracle Cloud's unique firewall setup
+- ❌ NAT rules don't persist after reboot on Oracle Linux
+- ❌ No auto-detection of network interfaces
+- ❌ Missing Oracle Cloud Security List configuration
+- ❌ No troubleshooting tools
+
+**What this repository includes:**
+- ✅ **Auto-detects** your network configuration
+- ✅ **Oracle-specific** firewall rules that persist
+- ✅ **Automated fixes** for the "no internet" problem
+- ✅ **Health checks** to verify everything works
+- ✅ **Step-by-step** Oracle Cloud Console instructions
+- ✅ **QR codes** for easy mobile setup
+- ✅ **Complete logs** for troubleshooting
+
+---
+
+## 🔄 Updating This Installation
+
+To update the scripts to the latest version:
+
+```bash
+cd wireguard-oracle-server
+git pull
+
+# Re-run if you want to update server config
+sudo ./wireguard-oracle-setup.sh --fix
+```
+
+**Note:** This won't affect your existing client configurations or keys.
+
+---
+
+## 🙏 Credits & License
+
+This repository is designed to help people successfully set up WireGuard on Oracle Cloud without frustration.
+
+**Key Technologies:**
+- [WireGuard](https://www.wireguard.com/) - Fast, modern VPN protocol
+- [Oracle Cloud](https://www.oracle.com/cloud/) - Free tier ARM instances
+- Oracle Linux 8 - Stable enterprise Linux distribution
+
+**Contributing:**
+Found a bug or have an improvement? Feel free to open an issue or pull request on GitHub!
+
+**Repository:** https://github.com/foxy1402/wireguard-oracle-server
+
+---
+
+## 📝 Quick Reference Card
+
+**Save this for quick access:**
+
+| Task | Command |
+|------|---------|
+| **Add new client** | `sudo ./wireguard-oracle-setup.sh --add-client NAME` |
+| **Check status** | `sudo wg show` |
+| **Restart WireGuard** | `sudo systemctl restart wg-quick@wg0` |
+| **View logs** | `sudo journalctl -u wg-quick@wg0 -f` |
+| **Fix problems** | `sudo ./complete-fix.sh` |
+| **Health check** | `sudo ./health-check.sh` |
+| **Run diagnostics** | `sudo ./wireguard-oracle-setup.sh --diagnose` |
+| **See client config** | `sudo cat /etc/wireguard/client_NAME.conf` |
+| **Show QR code** | `sudo qrencode -t ansiutf8 < /etc/wireguard/client_NAME.conf` |
+
+**Oracle Cloud Console Quick Link:**  
+🔗 https://cloud.oracle.com → Networking → Virtual Cloud Networks → Your VCN → Security Lists
+
+**WireGuard Download:**  
+🔗 https://www.wireguard.com/install/
+
+---
+
+**🎉 That's it! You now have a fully functional WireGuard VPN on Oracle Cloud!**
+
+Remember:
+- Oracle Cloud Security List is the #1 cause of issues - double-check it!
+- Use `complete-fix.sh` if you have internet connection problems
+- Run `health-check.sh` to verify everything is working
+
+**Happy secure browsing! 🔒**
