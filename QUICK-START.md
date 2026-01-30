@@ -257,6 +257,28 @@ Then repeat Part 4 and Part 5 for the new device!
 
 ---
 
+## 🌐 OPTIONAL: Install Web Dashboard
+
+**Only install this if you want to manage clients through a web browser instead of command line.**
+
+See the full README.md for complete dashboard installation instructions, including:
+- How to install the dashboard
+- Oracle Cloud firewall configuration for port 8080
+- Password setup on first visit
+- How to reset forgotten passwords
+
+Quick install:
+```bash
+# 1. Install dashboard
+sudo ./install-dashboard.sh
+
+# 2. Add Oracle Cloud firewall rule for TCP port 8080 (see README.md for details)
+
+# 3. Visit http://YOUR_SERVER_IP:8080 and set password
+```
+
+---
+
 ## 🔒 Important Security Notes
 
 - ✅ **Keep your config files safe** - they contain private keys

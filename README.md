@@ -213,6 +213,160 @@ On **Mac/Linux**, open Terminal and run the same ping commands above.
 
 On **Mobile**, open a web browser and try visiting any website.
 
+**✅ If all tests pass:** Congratulations! Your VPN is working! You can now optionally install the web dashboard (see next section) or skip to troubleshooting if needed.
+
+---
+
+## 🌐 OPTIONAL: Install Web Dashboard (After Main Setup)
+
+**⚠️ Only do this AFTER completing Steps 1-6 above and confirming your VPN works!**
+
+The web dashboard makes it easy to manage WireGuard clients through a web browser instead of command line.
+
+### When to Install Dashboard
+
+Install the dashboard if you want:
+- ✅ Easy client management with a graphical interface
+- ✅ QR codes generated automatically for mobile devices
+- ✅ Real-time view of connected clients
+- ✅ Bandwidth usage monitoring
+
+**Skip this if:** You're comfortable using command line for client management.
+
+---
+
+### Dashboard Installation (3 Simple Steps)
+
+#### **STEP 1: Install Dashboard on Server**
+
+SSH into your Oracle instance and run:
+```bash
+chmod +x install-dashboard.sh
+sudo ./install-dashboard.sh
+```
+
+Wait 1-2 minutes for installation to complete.
+
+---
+
+#### **STEP 2: Open Firewall Port in Oracle Cloud Console**
+
+**⚠️ CRITICAL - The dashboard won't be accessible without this!**
+
+1. **Login** to Oracle Cloud Console: https://cloud.oracle.com
+
+2. **Navigate** to the firewall settings:
+   - Click the **☰ hamburger menu** (top left)
+   - Click **Networking**
+   - Click **Virtual Cloud Networks**
+
+3. **Select your VCN:**
+   - Click on your VCN name (e.g., "vcn-20250130-...")
+
+4. **Go to Security Lists:**
+   - On the left sidebar, click **Security Lists**
+   - Click **Default Security List for vcn-...**
+
+5. **Add Ingress Rule** for the dashboard:
+   - Click the blue **Add Ingress Rules** button
+   - Fill in the form:
+     - **Source Type:** CIDR
+     - **Source CIDR:** `0.0.0.0/0` (allows access from anywhere)
+     - **IP Protocol:** TCP
+     - **Destination Port Range:** `8080`
+     - **Description:** WireGuard Dashboard
+   - Click **Add Ingress Rules** at the bottom
+
+6. **Verify the rule was added:**
+   - You should see a new rule: TCP, port 8080, source 0.0.0.0/0
+
+✅ **Firewall is now configured!**
+
+---
+
+#### **STEP 3: Access Dashboard and Set Password**
+
+1. **Find your server's public IP:**
+   ```bash
+   curl ifconfig.me
+   ```
+
+2. **Open your web browser** and visit:
+   ```
+   http://YOUR_SERVER_IP:8080
+   ```
+   (Replace YOUR_SERVER_IP with the IP from step 1)
+
+3. **First-time setup** (only on first visit):
+   - You'll see a "Set Password" screen
+   - Enter a strong password (at least 8 characters)
+   - Confirm the password
+   - Click "Set Password"
+   - ✅ Your password is now saved on the server
+
+4. **Login:**
+   - Use the password you just created
+   - You should now see the dashboard!
+
+5. **Start managing clients:**
+   - Click "Add Client" to add new devices
+   - Scan QR codes with mobile app
+   - Download configs for desktop
+   - See who's connected in real-time
+
+---
+
+### Dashboard Features
+
+Once installed, you can:
+- ✅ **Add clients** - Automatically generates configs and QR codes
+- ✅ **Remove clients** - Delete old devices
+- ✅ **Monitor connections** - See who's connected right now
+- ✅ **View bandwidth** - Check data usage per client
+- ✅ **Download configs** - Easy config file downloads
+
+---
+
+### Forgot Dashboard Password?
+
+If you forget your dashboard password, SSH into your server and run:
+
+```bash
+# Method 1: Using reset script
+cd /opt/wireguard-dashboard
+sudo ./reset-password.sh
+
+# Method 2: Manual reset
+sudo systemctl stop wg-dashboard
+sudo rm -f /opt/wireguard-dashboard/db/users.db
+sudo systemctl restart wg-dashboard
+# Visit the dashboard URL - you'll see the password setup screen again
+```
+
+---
+
+### Securing Your Dashboard (Recommended)
+
+After installing, improve security:
+
+1. **Restrict access by IP** (Highly recommended):
+   - Go back to Oracle Cloud Console → Security Lists
+   - Edit the port 8080 rule
+   - Change **Source CIDR** from `0.0.0.0/0` to `YOUR_HOME_IP/32`
+   - Get your IP from: https://whatismyip.com
+   - This allows only YOUR IP to access the dashboard
+
+2. **Use a strong password:**
+   - At least 12 characters
+   - Mix of uppercase, lowercase, numbers, symbols
+   - Store in a password manager
+
+3. **Change password regularly:**
+   ```bash
+   cd /opt/wireguard-dashboard
+   sudo ./reset-password.sh
+   ```
+
 ---
 
 ## 🔧 Troubleshooting
@@ -398,44 +552,13 @@ sudo cat /etc/wireguard/client_myphone.conf
 sudo qrencode -t ansiutf8 < /etc/wireguard/client_myphone.conf
 ```
 
-### Method 2: Using Web Dashboard (Easier for Non-Technical Users)
+### Method 2: Using Web Dashboard (If Installed)
 
-See the "Optional: Web Dashboard" section below for a graphical interface to manage clients.
-
----
-
-## 🌐 Optional: Install Web Dashboard
-
-Want to manage WireGuard through a web browser? Install the dashboard!
-
-### Step 1: Install Dashboard
-```bash
-chmod +x install-dashboard.sh
-sudo ./install-dashboard.sh
-```
-
-### Step 2: Configure Oracle Cloud Firewall
-Add another ingress rule (same as Step 3 earlier):
-1. Oracle Cloud Console → Networking → VCN → Security Lists
-2. Add Ingress Rule:
-   - **Source CIDR:** `0.0.0.0/0`
-   - **IP Protocol:** `TCP`
-   - **Destination Port Range:** `8080`
-3. Save
-
-### Step 3: Access Dashboard
-Open your browser and go to:
-```
-http://YOUR_SERVER_PUBLIC_IP:8080
-```
-
-**Features:**
-- ✅ Add/remove clients with QR codes
-- ✅ See who's connected in real-time
-- ✅ Monitor bandwidth usage
-- ✅ Download client configs easily
-
-💡 **Tip:** To find your server's public IP: `curl ifconfig.me`
+If you installed the optional web dashboard:
+- Login to dashboard at `http://YOUR_SERVER_IP:8080`
+- Click "Add Client"
+- Enter device name
+- Scan QR code or download config
 
 ---
 
@@ -486,11 +609,30 @@ http://YOUR_SERVER_PUBLIC_IP:8080
    sudo wg show
    ```
 
-6. **🛡️ Restrict Dashboard Access (If Installed)**
+6. **🛡️ Secure Dashboard Access (If Installed)**
+   
+   **Strong Password:**
+   - Use at least 12 characters
+   - Mix of uppercase, lowercase, numbers, symbols
+   - Store in a password manager
+   - Change every 3-6 months: `sudo ./reset-password.sh`
+   
+   **Restrict by IP:**
    ```bash
    # Update Oracle Cloud Security List for port 8080:
    # Change Source CIDR from 0.0.0.0/0 to YOUR_HOME_IP/32
    # This allows only your IP to access the dashboard
+   ```
+   
+   **Use HTTPS:**
+   - Install SSL certificate for encrypted dashboard access
+   - Prevents password interception on public networks
+
+7. **💾 Backup Your Configuration**
+   ```bash
+   # Backup WireGuard configs and dashboard data
+   sudo tar -czf wireguard-backup.tar.gz /etc/wireguard /opt/wireguard-dashboard
+   # Download to your computer for safekeeping
    ```
 
 ---
@@ -701,6 +843,30 @@ sudo wg show
 **Q: Does this hide my IP address?**  
 A: Yes! When connected, websites see your Oracle server's IP instead of your real IP.
 
+**Q: I forgot my dashboard password. How do I reset it?**  
+A: SSH into your server and run:
+```bash
+cd /opt/wireguard-dashboard
+sudo ./reset-password.sh
+```
+Or manually remove the password file and restart the dashboard:
+```bash
+sudo systemctl stop wg-dashboard
+sudo rm -f /opt/wireguard-dashboard/db/users.db
+sudo systemctl restart wg-dashboard
+```
+Visit the dashboard URL again - you'll see the password setup screen.
+
+**Q: Where is my dashboard password stored?**  
+A: The password is hashed and securely stored on your Oracle instance, typically at:
+- `/opt/wireguard-dashboard/db/users.db` or
+- `/etc/wireguard-dashboard/password.hash`
+
+The password never leaves your server and persists across reboots.
+
+**Q: Can I change my dashboard password without resetting it?**  
+A: Most dashboards have a "Change Password" option in settings. Alternatively, use the reset method above to set a new password.
+
 ---
 
 ## 📊 What Makes This Different?
@@ -772,12 +938,18 @@ Found a bug or have an improvement? Feel free to open an issue or pull request o
 | **Run diagnostics** | `sudo ./wireguard-oracle-setup.sh --diagnose` |
 | **See client config** | `sudo cat /etc/wireguard/client_NAME.conf` |
 | **Show QR code** | `sudo qrencode -t ansiutf8 < /etc/wireguard/client_NAME.conf` |
+| **Reset dashboard password** | `cd /opt/wireguard-dashboard && sudo ./reset-password.sh` |
+| **Restart dashboard** | `sudo systemctl restart wg-dashboard` |
+| **Check dashboard status** | `sudo systemctl status wg-dashboard` |
 
 **Oracle Cloud Console Quick Link:**  
 🔗 https://cloud.oracle.com → Networking → Virtual Cloud Networks → Your VCN → Security Lists
 
 **WireGuard Download:**  
 🔗 https://www.wireguard.com/install/
+
+**Dashboard Access:**  
+🔗 http://YOUR_SERVER_IP:8080 (first visit sets up password)
 
 ---
 
