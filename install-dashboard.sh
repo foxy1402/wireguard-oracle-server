@@ -308,14 +308,14 @@ class WireGuardHandler(BaseHTTPRequestHandler):
     
     def get_wg_status(self):
         try:
-            check_interface = subprocess.run(['ip', 'link', 'show', 'wg0'], 
-                                            capture_output=True, text=True)
+            check_interface = subprocess.run(['ip', 'link', 'show', 'wg0'],
+                                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
             
             if check_interface.returncode != 0:
                 return {'status': 'stopped', 'output': 'Interface wg0 not found'}
             
             service_check = subprocess.run(['systemctl', 'is-active', 'wg-quick@wg0'],
-                                          capture_output=True, text=True)
+                                          stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
             
             output = subprocess.check_output(['wg', 'show'], stderr=subprocess.STDOUT).decode()
             
@@ -345,11 +345,11 @@ class WireGuardHandler(BaseHTTPRequestHandler):
             diagnostics['nat_rules'] = 'error'
         
         try:
-            wg_check = subprocess.run(['ip', 'link', 'show', 'wg0'], 
-                                     capture_output=True, text=True)
+            wg_check = subprocess.run(['ip', 'link', 'show', 'wg0'],
+                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
             if wg_check.returncode == 0:
                 ip_check = subprocess.run(['ip', 'addr', 'show', 'wg0'],
-                                         capture_output=True, text=True)
+                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
                 diagnostics['wg_interface'] = 'up' if '10.8.0.1' in ip_check.stdout else 'down'
             else:
                 diagnostics['wg_interface'] = 'down'
