@@ -435,7 +435,8 @@ PersistentKeepalive = 25
             with open(client_file, 'w') as f:
                 f.write(client_config)
             
-            subprocess.run(['systemctl', 'restart', 'wg-quick@wg0'])
+            # Reload WireGuard config without disconnecting clients
+            subprocess.run(['bash', '-c', 'wg syncconf wg0 <(wg-quick strip wg0)'], check=False)
             
             return {
                 'success': True,
@@ -469,7 +470,8 @@ PersistentKeepalive = 25
             with open(config_file, 'w') as f:
                 f.write(new_content)
             
-            subprocess.run(['systemctl', 'restart', 'wg-quick@wg0'])
+            # Reload WireGuard config without disconnecting clients
+            subprocess.run(['bash', '-c', 'wg syncconf wg0 <(wg-quick strip wg0)'], check=False)
             
             return {'success': True, 'message': 'Client deleted successfully'}
         except Exception as e:
