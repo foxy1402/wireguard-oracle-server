@@ -105,7 +105,7 @@ def get_active_connections():
         for line in output.split('\n'):
             line = line.strip()
             if line.startswith('peer:'):
-                current_peer = line.split(':')[1].strip()
+                current_peer = line.split(':')[1].strip().rstrip('=')
                 connections[current_peer] = {}
             elif current_peer and line.startswith('endpoint:'):
                 connections[current_peer]['endpoint'] = line.split(':')[1].strip()
