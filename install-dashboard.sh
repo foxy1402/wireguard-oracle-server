@@ -169,12 +169,14 @@ class WireGuardHandler(BaseHTTPRequestHandler):
             # Merge configured clients with active connections
             for client in configured:
                 pub_key = client.get('public_key', '')
-                if pub_key in active:
+                if pub_key in active and 'handshake' in active[pub_key]:
+                    # Client is connected (has recent handshake)
                     client['active'] = True
-                    client['handshake'] = active[pub_key].get('handshake', 'Never')
+                    client['handshake'] = active[pub_key]['handshake']
                     client['endpoint'] = active[pub_key].get('endpoint', 'Unknown')
                     client['transfer'] = active[pub_key].get('transfer', 'No data')
                 else:
+                    # Client is offline (no handshake data)
                     client['active'] = False
                     client['handshake'] = 'Never connected'
             
