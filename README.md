@@ -37,9 +37,27 @@ Setting up WireGuard on Oracle Cloud is challenging because:
 
 **This repository provides:**
 - ✅ **Automated installation** - One command to set everything up
+- ✅ **Modern web dashboard** - Manage clients with QR codes and real-time monitoring
 - ✅ **Auto-fix script** - Automatically solves the "no internet" problem
 - ✅ **Health checks** - Verify everything is working correctly
 - ✅ **Oracle Cloud specific** - Designed specifically for Oracle Linux 8 ARM instances
+- ✅ **Zero-downtime management** - Add/remove clients without disconnecting others
+
+### ✨ Recent Improvements (Latest Version)
+
+**Dashboard Enhancements:**
+- 📱 **QR Code Modal** - Click to display QR codes in elegant overlay (no pop-ups)
+- 📊 **Transfer Statistics** - Real-time upload/download data for each client
+- 🔄 **Smart Config Reload** - Uses `wg syncconf` to preserve active connections
+- ✅ **Accurate Status Detection** - Shows true online/offline based on handshake activity
+- 🎨 **Clean Interface** - Removed broken emojis, professional appearance
+
+**Bug Fixes:**
+- Fixed Python 3.6 compatibility issues on Oracle Linux 8
+- Fixed client status always showing "offline" despite being connected
+- Fixed public key matching between config and active connections
+- Fixed stats reset when adding/deleting clients
+- Fixed handshake times not displaying correctly
 
 ### 🔄 How It Works (Visual Overview)
 
@@ -318,12 +336,33 @@ Wait 1-2 minutes for installation to complete.
 
 ### Dashboard Features
 
-Once installed, you can:
-- ✅ **Add clients** - Automatically generates configs and QR codes
-- ✅ **Remove clients** - Delete old devices
-- ✅ **Monitor connections** - See who's connected right now
-- ✅ **View bandwidth** - Check data usage per client
-- ✅ **Download configs** - Easy config file downloads
+The modern web dashboard provides a clean, intuitive interface with these features:
+
+**Client Management:**
+- ✅ **Add clients** - Automatically generates configs with encryption keys
+- ✅ **QR code display** - Click QR button to show scannable code in modal overlay
+- ✅ **Download configs** - One-click download for desktop clients
+- ✅ **Delete clients** - Remove old devices safely (preserves other connections)
+
+**Real-time Monitoring:**
+- ✅ **Connection status** - See online/offline status for each client
+- ✅ **Last handshake** - View connection timestamps (e.g., "2 minutes ago")
+- ✅ **Transfer statistics** - Monitor upload/download data per client
+- ✅ **Auto-refresh** - Dashboard updates every 10-30 seconds automatically
+
+**Server Diagnostics:**
+- ✅ **Server status** - Check if WireGuard service is running
+- ✅ **IP forwarding** - Verify kernel forwarding is enabled
+- ✅ **NAT rules** - Confirm MASQUERADE is configured
+- ✅ **Firewall status** - Check if ports are open
+- ✅ **Auto-fix button** - One-click repair for common issues
+
+**Technical Improvements (Latest Version):**
+- ✅ **Zero-downtime updates** - Adding/deleting clients doesn't disconnect others
+- ✅ **Preserved statistics** - Transfer stats and handshake times stay intact
+- ✅ **Python 3.6 compatible** - Works on Oracle Linux 8 default Python
+- ✅ **Clean UI** - No broken emojis, professional appearance
+- ✅ **Modal QR codes** - In-page overlay instead of pop-up windows
 
 ---
 
@@ -332,14 +371,9 @@ Once installed, you can:
 If you forget your dashboard password, SSH into your server and run:
 
 ```bash
-# Method 1: Using reset script
-cd /opt/wireguard-dashboard
-sudo ./reset-password.sh
-
-# Method 2: Manual reset
-sudo systemctl stop wg-dashboard
-sudo rm -f /opt/wireguard-dashboard/db/users.db
-sudo systemctl restart wg-dashboard
+# Remove the password file to reset
+sudo rm -f /opt/wireguard-dashboard/password.hash
+sudo systemctl restart wireguard-dashboard
 # Visit the dashboard URL - you'll see the password setup screen again
 ```
 
