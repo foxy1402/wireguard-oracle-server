@@ -21,7 +21,7 @@
 **For experienced users - 3 commands:**
 
 ```bash
-git clone https://github.com/yourusername/wireguard-oracle-server.git
+git clone https://github.com/foxy1402/wireguard-oracle-server.git
 cd wireguard-oracle-server
 chmod +x *.sh && sudo ./wireguard-oracle-setup.sh
 ```
@@ -87,7 +87,7 @@ ssh -i /path/to/your/key.pem opc@YOUR_INSTANCE_IP
 sudo dnf install -y git
 
 # Clone repository
-git clone https://github.com/yourusername/wireguard-oracle-server.git
+git clone https://github.com/foxy1402/wireguard-oracle-server.git
 cd wireguard-oracle-server
 
 # Make scripts executable

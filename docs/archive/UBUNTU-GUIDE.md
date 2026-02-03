@@ -6,7 +6,7 @@
 ## ⚡ 30-Second Quick Start
 ```bash
 # 1. On your Ubuntu instance
-git clone https://github.com/yourusername/wireguard-oracle-server.git
+git clone https://github.com/foxy1402/wireguard-oracle-server.git
 cd wireguard-oracle-server
 chmod +x ubuntu-*.sh wireguard-ubuntu-setup.sh
 sudo ./wireguard-ubuntu-setup.sh
@@ -109,7 +109,7 @@ sudo apt update
 sudo apt install -y git
 
 # Clone repository
-git clone https://github.com/yourusername/wireguard-oracle-server.git
+git clone https://github.com/foxy1402/wireguard-oracle-server.git
 cd wireguard-oracle-server
 
 # Make Ubuntu scripts executable

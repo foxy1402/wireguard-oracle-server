@@ -13,7 +13,7 @@
 
 **📘 Oracle Linux 8** *(Recommended for stability)*
 ```bash
-git clone https://github.com/yourusername/wireguard-oracle-server.git
+git clone https://github.com/foxy1402/wireguard-oracle-server.git
 cd wireguard-oracle-server
 chmod +x wireguard-oracle-setup.sh
 sudo ./wireguard-oracle-setup.sh
@@ -21,7 +21,7 @@ sudo ./wireguard-oracle-setup.sh
 
 **🟠 Ubuntu 20.04/22.04/24.04** *(Better performance)*
 ```bash
-git clone https://github.com/yourusername/wireguard-oracle-server.git
+git clone https://github.com/foxy1402/wireguard-oracle-server.git
 cd wireguard-oracle-server
 chmod +x wireguard-ubuntu-setup.sh
 sudo ./wireguard-ubuntu-setup.sh
@@ -278,8 +278,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 📞 Support
 
-- **Issues:** [GitHub Issues](https://github.com/yourusername/wireguard-oracle-server/issues)
-- **Discussions:** [GitHub Discussions](https://github.com/yourusername/wireguard-oracle-server/discussions)
+- **Issues:** [GitHub Issues](https://github.com/foxy1402/wireguard-oracle-server/issues)
+- **Discussions:** [GitHub Discussions](https://github.com/foxy1402/wireguard-oracle-server/discussions)
 - **Documentation:** [Full guides](docs/)
 
 ---
